@@ -1,0 +1,132 @@
+/* ==========================================
+   🎨 COLOR THEMES (PERMANENT DARK MODE)
+   ========================================== */
+:root {
+  --bg-main: transparent; 
+  --bg-overlay: rgba(15, 23, 42, 0.85); /* Dark frosted glass */
+  --bg-card: rgba(30, 41, 59, 0.9);
+  --text-main: #f8f9fa;
+  --text-muted: #94a3b8;
+  --border-color: #334155;
+  --nav-bg: rgba(2, 6, 23, 0.95);
+  --nav-item: #1e293b;
+  --nav-text: #e2e8f0;
+}
+
+body {
+  background-color: #0f172a; /* Fallback */
+  color: var(--text-main);
+  margin: 0;
+}
+
+input {
+  background-color: transparent;
+  color: var(--text-main);
+  transition: background-color 0.3s ease;
+}
+
+/* ==========================================
+   📱 AURA STYLIST LAYOUT & IMAGE BACKGROUND
+   ========================================== */
+
+/* Default Desktop Layout with Image Background */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: row;
+  background-image: url('login-bg.jpg'); /* Your boutique image! */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  position: relative;
+}
+
+/* The Frosted Glass Overlay */
+.app-layout::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: var(--bg-overlay);
+  backdrop-filter: blur(12px); /* Creates the frosted glass blur */
+  z-index: 0;
+  transition: background-color 0.3s ease;
+}
+
+/* Bring the actual app content above the glass */
+.app-sidebar, main {
+  position: relative;
+  z-index: 1;
+}
+
+.app-sidebar {
+  width: 250px;
+  background-color: var(--nav-bg);
+  color: white;
+  padding: 2rem 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  box-sizing: border-box;
+  backdrop-filter: blur(10px); /* Blurs the image behind the sidebar too */
+  border-right: 1px solid var(--border-color);
+}
+
+.nav-links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* 📱 MOBILE OVERRIDES (Screens smaller than 768px) */
+@media (max-width: 768px) {
+  /* 1. Stack the whole app vertically */
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* 2. Turn Sidebar into a Top Navbar */
+  .app-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    padding: 1rem;
+  }
+
+  /* Make nav links scrollable horizontally on mobile */
+  .nav-links-container {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  
+  .nav-links-container > a {
+    white-space: nowrap;
+    text-align: center;
+    flex: 1;
+  }
+
+  /* 3. Hide the giant body profile card in the mobile navbar to save space */
+  .mobile-hide-profile {
+    display: none !important;
+  }
+
+  /* 4. Fix the Digital Closet Grid for small screens */
+  .closet-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  /* 5. Stack the AI Stylist Outfit Generator vertically */
+  .stylist-outfit-container {
+    flex-direction: column !important;
+    padding: 15px !important;
+  }
+  
+  /* Make the "➕" icon rotate 90 degrees so it points down! */
+  .stylist-plus-icon {
+    transform: rotate(90deg);
+    margin: 10px 0;
+  }
+}
