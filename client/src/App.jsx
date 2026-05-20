@@ -20,7 +20,7 @@ const Auth = ({ onAuthSuccess }) => {
     setError('');
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
     try {
-      const response = await axios.post(`http://localhost:5000${endpoint}`, { email, password });
+      const response = await axios.post(`https://stylist-q497.onrender.com`, { email, password });
       localStorage.setItem('aura_token', response.data.token);
       onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
     } catch (err) {
@@ -77,7 +77,7 @@ const Wardrobe = ({ clothes, setClothes }) => {
   const handleDelete = async (itemId) => {
     if (!window.confirm("Delete this item?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/wardrobe/${itemId}`);
+      await axios.delete(`https://stylist-q497.onrender.com/api/wardrobe/${itemId}`);
       setClothes(clothes.filter((item) => item._id !== itemId));
     } catch (error) {
       alert("Failed to delete.");
@@ -139,7 +139,7 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
       formData.append('image', files[i]);
       formData.append('userId', userId);
       try {
-        const response = await axios.post('http://localhost:5000/api/upload-clothing', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+        const response = await axios.post('https://stylist-q497.onrender.com/api/upload-clothing', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
         totalSaved += response.data.savedCount; totalSkipped += response.data.skippedCount;
         if (i < files.length - 1) await sleep(4000); 
       } catch (error) { 
@@ -198,7 +198,7 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
     e.preventDefault();
     setStylistData(prev => ({ ...prev, loading: true, outfits: [] }));
     try {
-      const response = await axios.post('http://localhost:5000/api/generate-outfit', { userId, occasion, location });
+      const response = await axios.post('https://stylist-q497.onrender.com/api/generate-outfit', { userId, occasion, location });
       setStylistData(prev => ({ ...prev, loading: false, outfits: response.data.suggestions }));
     } catch (error) {
       alert("Failed to consult AI. Make sure you have enough clothes!");
@@ -305,7 +305,7 @@ const Setup = ({ userId, onComplete }) => {
     if (files.right) formData.append('right', files.right);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/analyze-body', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const response = await axios.post('https://stylist-q497.onrender.com/api/analyze-body', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setMeasurements(response.data.measurements);
       setStep(2); 
     } catch (error) { console.error("Analysis error:", error); alert("Failed to analyze body."); }
@@ -315,11 +315,11 @@ const Setup = ({ userId, onComplete }) => {
   const handleFinalSave = async () => {
     setLoading(true);
     try {
-      await axios.put(`http://localhost:5000/api/user/${userId}/measurements`, { measurements });
+      await axios.put(`https://stylist-q497.onrender.com/api/user/${userId}/measurements`, { measurements });
 
       const formData = new FormData();
       formData.append('image', files.front);
-      const avatarRes = await axios.post(`http://localhost:5000/api/user/${userId}/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+      const avatarRes = await axios.post(`https://stylist-q497.onrender.com/api/user/${userId}/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' }});
 
       onComplete(measurements, avatarRes.data.frontImage); 
     } catch (error) { console.error("Error saving:", error); alert("Failed to save profile."); }
@@ -436,7 +436,7 @@ export default function App() {
   };
 
   const fetchCloset = () => {
-    if (userId) axios.get(`http://localhost:5000/api/wardrobe/${userId}`).then(res => setClothes(res.data)).catch(err => console.error(err));
+    if (userId) axios.get(`https://stylist-q497.onrender.com/api/wardrobe/${userId}`).then(res => setClothes(res.data)).catch(err => console.error(err));
   };
 
   useEffect(() => { fetchCloset(); }, [userId]);
