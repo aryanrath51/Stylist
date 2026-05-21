@@ -1,2 +1,15 @@
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
-body { background-color: #f8f9fa; }
+:root {
+  --bg-main: #0f172a;           /* Dark slate background */
+  --bg-card: rgba(30, 41, 59, 0.8); /* Slightly lighter transparent card */
+  --text-main: #f8fafc;         /* Crisp white text */
+  --text-muted: #cbd5e1;        /* Softer gray text */
+  --border-color: #334155;      /* Subtle border lines */
+  --nav-bg: #0f172a;
+  --nav-text: #f8fafc;
+  --nav-item: #1e293b;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+}
