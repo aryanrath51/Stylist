@@ -15,22 +15,31 @@ const Auth = ({ onAuthSuccess }) => {
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
-    try {
-      const response = await axios.post(`https://stylist-q497.onrender.com${endpoint}`, { email, password });
-      onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
-    } catch (err) {
-      setError(err.response?.data?.error || "Something went wrong.");
-    }
-    setLoading(false);
-  };
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
+  
+  try {
+    // Make sure these are BACKTICKS (the key above Tab), not single quotes!
+    const response = await axios.post(`https://stylist-q497.onrender.com${endpoint}`, { email, password });
+    
+    localStorage.setItem('aura_token', response.data.token);
+    onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
+    
+  } catch (err) {
+    console.error("FULL CRASH REPORT:", err);
+    
+    // This forcefully grabs whatever error the backend or network is throwing
+    const exactError = err.response?.data?.error || err.response?.data?.message || err.message || "Unknown server error";
+    setError(`🚨 ${exactError}`);
+  }
+  setLoading(false);
+};
 
   return (
     <div style={{ 
-      display: 'flex', 
+      display: 'flex',  
       height: '100vh', 
       alignItems: 'center', 
       justifyContent: 'center',
