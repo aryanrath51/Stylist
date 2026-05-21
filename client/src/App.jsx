@@ -337,6 +337,15 @@ const Setup = ({ userId, onComplete }) => {
   if (step === 2 && measurements) {
     return (
       <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+        <h1 style={{ fontSize: '2.5rem', marginBottom: '10px', color: '#f8fafc' }}>
+          Setup My Profile 👤
+        </h1>
+        <p style={{ color: '#cbd5e1', marginBottom: '30px', fontSize: '1.1rem', lineHeight: '1.5' }}>
+          Welcome! To give you the best AI styling recommendations, we need to measure your 3D body proportions. <br/>
+          <b>Please upload clear photos of yourself from the Front, Back, Left, and Right sides.</b>
+        </p>
+        <form onSubmit={handleAnalyze} style={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}></form>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}></div>
         <h2 style={{ fontSize: '2rem', color: 'var(--text-main)', marginBottom: '10px' }}>Interactive AI Review 📐</h2>
         
         <div style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '30px', backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
