@@ -20,8 +20,7 @@ const Auth = ({ onAuthSuccess }) => {
     setError('');
     const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
     try {
-      const response = await axios.post(`https://stylist-q497.onrender.com`, { email, password });
-      localStorage.setItem('aura_token', response.data.token);
+      const response = await axios.post(`https://stylist-q497.onrender.com${endpoint}`, { email, password });
       onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
     } catch (err) {
       setError(err.response?.data?.error || "Something went wrong.");
