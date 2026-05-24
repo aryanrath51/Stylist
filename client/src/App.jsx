@@ -174,16 +174,19 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
 };
 
 // ==========================================
-// ✨ 4. STYLIST COMPONENT
+// ✨ 4. STYLIST COMPONENT (EMPATHY UPGRADE)
 // ==========================================
 const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) => {
-  const { occasion, location, loading, outfits } = stylistData;
+  const { occasion, location, preferences, loading, outfits } = stylistData;
 
   const generateOutfit = async (e) => {
     e.preventDefault();
     setStylistData(prev => ({ ...prev, loading: true, outfits: [] }));
     try {
-      const response = await axios.post('https://stylist-q497.onrender.com/api/generate-outfit', { userId, occasion, location });
+      // 🌟 Notice we are now sending 'preferences' to your backend!
+      const response = await axios.post('https://stylist-q497.onrender.com/api/generate-outfit', { 
+        userId, occasion, location, preferences 
+      });
       setStylistData(prev => ({ ...prev, loading: false, outfits: response.data.suggestions }));
     } catch (error) {
       alert("Failed to consult AI. Make sure you have enough clothes!");
@@ -198,17 +201,30 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
       </h1>
       
       <form onSubmit={generateOutfit} style={{ backgroundColor: 'var(--bg-card)', padding: '25px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: '2.5rem', transition: '0.3s' }}>
+        
         <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '8px' }}>What's the occasion?</label>
-            <input type="text" value={occasion} onChange={(e) => setStylistData(p => ({...p, occasion: e.target.value}))} placeholder="e.g., Dinner Date" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '2px solid var(--border-color)', boxSizing: 'border-box', outline: 'none' }} />
+            <input type="text" required value={occasion} onChange={(e) => setStylistData(p => ({...p, occasion: e.target.value}))} placeholder="e.g., Family Function" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(15, 23, 42, 0.5)', color: 'white', boxSizing: 'border-box', outline: 'none' }} />
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '8px' }}>Where are you going?</label>
-            <input type="text" value={location} onChange={(e) => setStylistData(p => ({...p, location: e.target.value}))} placeholder="e.g., Delhi" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '2px solid var(--border-color)', boxSizing: 'border-box', outline: 'none' }} />
+            <input type="text" required value={location} onChange={(e) => setStylistData(p => ({...p, location: e.target.value}))} placeholder="e.g., Temple in Delhi" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(15, 23, 42, 0.5)', color: 'white', boxSizing: 'border-box', outline: 'none' }} />
           </div>
         </div>
-        <button type="submit" disabled={loading} style={{ backgroundColor: '#3b82f6', color: 'white', padding: '15px', borderRadius: '8px', border: 'none', cursor: 'pointer', width: '100%', fontSize: '1.1rem', fontWeight: 'bold', transition: '0.2s' }}>
+
+        {/* 🌟 THE NEW CHAT/PREFERENCES BOX */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '8px' }}>Any boundaries or style requests? (Optional)</label>
+          <textarea 
+            value={preferences} 
+            onChange={(e) => setStylistData(p => ({...p, preferences: e.target.value}))} 
+            placeholder="e.g., I don't want to wear sleeveless, keep it modest, no bright colors or shirt dresses, etc." 
+            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(15, 23, 42, 0.5)', color: 'white', boxSizing: 'border-box', outline: 'none', minHeight: '80px', resize: 'vertical', fontFamily: 'inherit' }} 
+          />
+        </div>
+
+        <button type="submit" disabled={loading} style={{ backgroundColor: '#3b82f6', color: 'white', padding: '15px', borderRadius: '8px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', width: '100%', fontSize: '1.1rem', fontWeight: 'bold', transition: '0.2s' }}>
           {loading ? 'Consulting Elite Fashion AI...' : 'Generate My Lookbook'}
         </button>
       </form>
@@ -399,7 +415,7 @@ export default function App() {
 
   const [clothes, setClothes] = useState([]);
   const [uploadData, setUploadData] = useState({ files: [], previews: [], loading: false, progress: { current: 0, total: 0 } });
-  const [stylistData, setStylistData] = useState({ occasion: '', location: '', loading: false, outfits: [] });
+  const [stylistData, setStylistData] = useState({ occasion: '', location: '', preferences: '', loading: false, outfits: [] });
 
   const handleAuthSuccess = (id, measurements, permanentImage) => {
     setUserId(id);
