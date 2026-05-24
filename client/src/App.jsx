@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Sparkles, Trash2, Mail, Lock } from 'lucide-react';
 import axios from 'axios';
-import './App.css';
+import './App.css'; // WE NEED THIS BACK FOR THE MAIN APP!
 
 // ==========================================
-// 🔐 1. AUTHENTICATION (STANDALONE URBAN ENTRANCE)
+// 🔐 1. AUTHENTICATION
 // ==========================================
 const Auth = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,42 +15,26 @@ const Auth = ({ onAuthSuccess }) => {
   const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError('');
-  const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
-  
-  try {
-    // Make sure these are BACKTICKS (the key above Tab), not single quotes!
-    const response = await axios.post(`https://stylist-q497.onrender.com${endpoint}`, { email, password });
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
     
-    localStorage.setItem('aura_token', response.data.token);
-    onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
-    
-  } catch (err) {
-    console.error("FULL CRASH REPORT:", err);
-    
-    // This forcefully grabs whatever error the backend or network is throwing
-    const exactError = err.response?.data?.error || err.response?.data?.message || err.message || "Unknown server error";
-    setError(`🚨 ${exactError}`);
-  }
-  setLoading(false);
-};
+    try {
+      const response = await axios.post(`https://stylist-q497.onrender.com${endpoint}`, { email, password });
+      localStorage.setItem('aura_token', response.data.token);
+      onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
+    } catch (err) {
+      console.error("FULL CRASH REPORT:", err);
+      const exactError = err.response?.data?.error || err.response?.data?.message || err.message || "Unknown server error";
+      setError(`🚨 ${exactError}`);
+    }
+    setLoading(false);
+  };
 
   return (
-    <div style={{ 
-      display: 'flex',  
-      height: '100vh', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      backgroundImage: 'url("/login-bg.jpg")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat'
-    }}>
-      
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundImage: 'url("/login-bg.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
       <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', width: '100%', maxWidth: '400px', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
-        
         <h1 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '10px', letterSpacing: '3px', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>AURA STYLIST</h1>
         <p style={{ textAlign: 'center', color: '#e2e8f0', marginBottom: '30px' }}>{isLogin ? 'Welcome back.' : 'Create an account.'}</p>
         
@@ -87,15 +71,12 @@ const Wardrobe = ({ clothes, setClothes }) => {
     try {
       await axios.delete(`https://stylist-q497.onrender.com/api/wardrobe/${itemId}`);
       setClothes(clothes.filter((item) => item._id !== itemId));
-    } catch (error) {
-      alert("Failed to delete.");
-    }
+    } catch (error) { alert("Failed to delete."); }
   };
 
   return (
     <div style={{ padding: '2rem' }}>
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>👕 My Digital Closet</h1>
-      
       {clothes.length === 0 ? (
         <div style={{ textAlign: 'center', marginTop: '10vh', backgroundColor: 'var(--bg-card)', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', transition: '0.3s' }}>
           <h2 style={{ color: 'var(--text-main)', marginBottom: '10px' }}>Your closet is looking a little bare!</h2>
@@ -105,13 +86,9 @@ const Wardrobe = ({ clothes, setClothes }) => {
         <div className="closet-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
           {clothes.map((item) => (
             <div key={item._id} style={{ backgroundColor: 'var(--bg-card)', padding: '15px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', position: 'relative', transition: '0.3s' }}>
-              <button onClick={() => handleDelete(item._id)} style={{ position: 'absolute', top: '25px', right: '25px', backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: '50%', width: '35px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>
-                <Trash2 size={18} />
-              </button>
+              <button onClick={() => handleDelete(item._id)} style={{ position: 'absolute', top: '25px', right: '25px', backgroundColor: 'rgba(239, 68, 68, 0.9)', color: 'white', border: 'none', borderRadius: '50%', width: '35px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}><Trash2 size={18} /></button>
               <img src={item.imageUrl} alt={item.subCategory} style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '8px' }} />
-              <h3 style={{ marginTop: '12px', fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                {item.color} {item.pattern && item.pattern !== 'Solid' ? item.pattern + ' ' : ''}{item.subCategory}
-              </h3>
+              <h3 style={{ marginTop: '12px', fontSize: '1.1rem', color: 'var(--text-main)' }}>{item.color} {item.pattern && item.pattern !== 'Solid' ? item.pattern + ' ' : ''}{item.subCategory}</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textTransform: 'capitalize' }}>{item.category} • {item.occasion[0]}</p>
             </div>
           ))}
@@ -286,7 +263,7 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
 };
 
 // ==========================================
-// 📐 5. SETUP COMPONENT (RESTORED & FULLY HARDCODED!)
+// 📐 5. SETUP COMPONENT (FIXED LOGIC & OVERLAY)
 // ==========================================
 const Setup = ({ userId, onComplete }) => {
   const [files, setFiles] = useState({ front: null, back: null, left: null, right: null });
@@ -334,7 +311,7 @@ const Setup = ({ userId, onComplete }) => {
     setLoading(false);
   };
 
-  // --- STEP 2: INTERACTIVE AI REVIEW ---
+  // --- STEP 2: INTERACTIVE AI REVIEW (MOVED TO TOP SO IT RUNS!) ---
   if (step === 2 && measurements) {
     return (
       <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
@@ -384,7 +361,6 @@ const Setup = ({ userId, onComplete }) => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
           {['front', 'back', 'left', 'right'].map((angle) => (
             <div key={angle} style={{ border: '2px dashed #475569', padding: '20px', borderRadius: '8px', cursor: 'pointer', position: 'relative', textAlign: 'center', backgroundColor: '#0f172a' }}>
-              {/* Opacity 0 hides the ugly default button while keeping it clickable */}
               <input type="file" accept="image/*" onChange={(e) => handleFileChange(angle, e)} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} />
               <p style={{ fontWeight: 'bold', color: files[angle] ? '#10b981' : '#cbd5e1', textTransform: 'capitalize', margin: 0 }}>
                 {files[angle] ? `✅ ${angle} Selected` : `📸 ${angle} ${angle === 'front' ? '(Required)' : ''}`}
@@ -458,19 +434,21 @@ export default function App() {
 
   if (!token) return <Auth onAuthSuccess={handleAuthSuccess} />;
 
-  // 🌟 NEW: This perfectly routes the user to the Setup screen if their profile is missing!
+  // 🌟 NEW: Added zIndex so the Setup screen sits perfectly above the frosted glass!
   if (needsSetup) {
     return (
       <div className="app-layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Setup 
-          userId={userId} 
-          onComplete={(meas, img) => { 
-            const profileData = { measurements: meas, frontImage: img };
-            setUserProfile(profileData); 
-            localStorage.setItem('aura_profile', JSON.stringify(profileData));
-            setNeedsSetup(false); 
-          }} 
-        />
+        <div style={{ position: 'relative', zIndex: 10, width: '100%' }}>
+          <Setup 
+            userId={userId} 
+            onComplete={(meas, img) => { 
+              const profileData = { measurements: meas, frontImage: img };
+              setUserProfile(profileData); 
+              localStorage.setItem('aura_profile', JSON.stringify(profileData));
+              setNeedsSetup(false); 
+            }} 
+          />
+        </div>
       </div>
     );
   }
