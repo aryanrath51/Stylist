@@ -286,14 +286,14 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
 };
 
 // ==========================================
-// 📐 5. SETUP COMPONENT (RESTORED!)
+// 📐 5. SETUP COMPONENT (RESTORED & FULLY HARDCODED!)
 // ==========================================
 const Setup = ({ userId, onComplete }) => {
   const [files, setFiles] = useState({ front: null, back: null, left: null, right: null });
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [measurements, setMeasurements] = useState(null);
-  const [frontPreview, setFrontPreview] = useState(null); 
+  const [frontPreview, setFrontPreview] = useState(null);
   const [activeField, setActiveField] = useState(null);
 
   const handleFileChange = (angle, e) => {
@@ -315,7 +315,7 @@ const Setup = ({ userId, onComplete }) => {
     try {
       const response = await axios.post('https://stylist-q497.onrender.com/api/analyze-body', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       setMeasurements(response.data.measurements);
-      setStep(2); 
+      setStep(2);
     } catch (error) { console.error("Analysis error:", error); alert("Failed to analyze body."); }
     setLoading(false);
   };
@@ -329,25 +329,62 @@ const Setup = ({ userId, onComplete }) => {
       formData.append('image', files.front);
       const avatarRes = await axios.post(`https://stylist-q497.onrender.com/api/user/${userId}/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' }});
 
-      onComplete(measurements, avatarRes.data.frontImage); 
+      onComplete(measurements, avatarRes.data.frontImage);
     } catch (error) { console.error("Error saving:", error); alert("Failed to save profile."); }
     setLoading(false);
   };
 
+  // --- STEP 2: INTERACTIVE AI REVIEW ---
   if (step === 2 && measurements) {
     return (
+      <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
+        <h2 style={{ fontSize: '2rem', color: '#f8fafc', marginBottom: '10px' }}>Interactive AI Review 📐</h2>
+        
+        <div style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '30px', backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+          <div style={{ flex: 1, position: 'relative', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#0f172a', display: 'flex', justifyContent: 'center' }}>
+            {frontPreview && <img src={frontPreview} style={{ width: '100%', maxHeight: '450px', objectFit: 'contain' }} alt="Preview" />}
+            {['shoulders', 'chest', 'waist', 'hips'].map((part, i) => (
+              <div key={part} style={{ position: 'absolute', top: `${22 + (i*12)}%`, width: '100%', textAlign: 'center', opacity: activeField === part ? 1 : 0, transition: '0.3s' }}>
+                <span style={{ backgroundColor: '#10b981', color: '#ffffff', padding: '6px 16px', borderRadius: '20px', fontWeight: 'bold', textTransform: 'capitalize' }}>{part} ➔</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            <div>
+              <label style={{ fontSize: '0.9rem', color: '#cbd5e1', fontWeight: 'bold' }}>Predicted Body Type</label>
+              <input type="text" value={measurements.bodyType} onChange={e => setMeasurements({...measurements, bodyType: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #475569', backgroundColor: '#0f172a', color: '#f8fafc' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              {['chest', 'waist', 'hips', 'shoulderWidth'].map((key) => (
+                <div key={key}>
+                  <label style={{ fontSize: '0.9rem', color: '#cbd5e1', fontWeight: 'bold', textTransform: 'capitalize' }}>{key.replace('Width', '')} (in)</label>
+                  <input type="number" value={measurements[key]} onFocus={() => setActiveField(key === 'shoulderWidth' ? 'shoulders' : key)} onBlur={() => setActiveField(null)} onChange={e => setMeasurements({...measurements, [key]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: activeField === key ? '2px solid #10b981' : '1px solid #475569', backgroundColor: '#0f172a', color: '#f8fafc' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button onClick={handleFinalSave} disabled={loading} style={{ backgroundColor: '#10b981', color: '#ffffff', padding: '15px 30px', borderRadius: '8px', border: 'none', cursor: 'pointer', width: '100%', fontSize: '1.1rem', fontWeight: 'bold' }}>
+          {loading ? 'Saving Updates...' : 'Looks Good! Save & Enter Closet ➔'}
+        </button>
+      </div>
+    );
+  }
+
+  // --- STEP 1: UPLOAD PHOTOS ---
+  return (
     <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-      {/* Hardcoded White Text */}
       <h1 style={{ fontSize: '2.5rem', marginBottom: '10px', color: '#f8fafc' }}>Setup My Profile 👤</h1>
       <p style={{ color: '#cbd5e1', marginBottom: '30px', fontSize: '1.1rem' }}>
         Upload your photos so our AI can measure your 3D proportions.
       </p>
 
-      {/* Hardcoded Visible Card Background */}
       <form onSubmit={handleAnalyze} style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
           {['front', 'back', 'left', 'right'].map((angle) => (
             <div key={angle} style={{ border: '2px dashed #475569', padding: '20px', borderRadius: '8px', cursor: 'pointer', position: 'relative', textAlign: 'center', backgroundColor: '#0f172a' }}>
+              {/* Opacity 0 hides the ugly default button while keeping it clickable */}
               <input type="file" accept="image/*" onChange={(e) => handleFileChange(angle, e)} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} />
               <p style={{ fontWeight: 'bold', color: files[angle] ? '#10b981' : '#cbd5e1', textTransform: 'capitalize', margin: 0 }}>
                 {files[angle] ? `✅ ${angle} Selected` : `📸 ${angle} ${angle === 'front' ? '(Required)' : ''}`}
@@ -356,32 +393,8 @@ const Setup = ({ userId, onComplete }) => {
           ))}
         </div>
         
-        {/* Hardcoded Bright Blue Button */}
         <button type="submit" disabled={loading || !files.front} style={{ backgroundColor: (!files.front || loading) ? '#334155' : '#3b82f6', color: '#ffffff', padding: '15px 24px', borderRadius: '8px', border: 'none', cursor: (!files.front || loading) ? 'not-allowed' : 'pointer', width: '100%', fontSize: '1.2rem', fontWeight: 'bold', transition: '0.2s' }}>
           {loading ? 'Analyzing AI Data...' : 'Generate AI Profile ➔'}
-        </button>
-      </form>
-    </div>
-  );
-  }
-
-  return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '10px', color: 'var(--text-main)' }}>Setup My Profile 👤</h1>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>Upload your photos so our AI can measure your 3D proportions.</p>
-      <form onSubmit={handleAnalyze} style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
-          {['front', 'back', 'left', 'right'].map((angle) => (
-            <div key={angle} style={{ border: '2px dashed var(--border-color)', padding: '20px', borderRadius: '8px', cursor: 'pointer', position: 'relative', textAlign: 'center' }}>
-              <input type="file" accept="image/*" onChange={(e) => handleFileChange(angle, e)} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer' }} />
-              <p style={{ fontWeight: 'bold', color: files[angle] ? '#10b981' : 'var(--text-muted)', textTransform: 'capitalize' }}>
-                {files[angle] ? `✅ ${angle} Selected` : `📸 ${angle} ${angle === 'front' ? '(Required)' : ''}`}
-              </p>
-            </div>
-          ))}
-        </div>
-        <button type="submit" disabled={loading || !files.front} style={{ backgroundColor: (!files.front || loading) ? 'var(--border-color)' : '#3b82f6', color: 'white', padding: '12px 24px', borderRadius: '8px', border: 'none', cursor: 'pointer', width: '100%', fontSize: '1rem', fontWeight: 'bold' }}>
-          {loading ? 'Analyzing...' : 'Generate AI Profile'}
         </button>
       </form>
     </div>
