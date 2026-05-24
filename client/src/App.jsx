@@ -336,48 +336,33 @@ const Setup = ({ userId, onComplete }) => {
 
   if (step === 2 && measurements) {
     return (
-      <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '10px', color: '#f8fafc' }}>
-          Setup My Profile 👤
-        </h1>
-        <p style={{ color: '#cbd5e1', marginBottom: '30px', fontSize: '1.1rem', lineHeight: '1.5' }}>
-          Welcome! To give you the best AI styling recommendations, we need to measure your 3D body proportions. <br/>
-          <b>Please upload clear photos of yourself from the Front, Back, Left, and Right sides.</b>
-        </p>
-        <form onSubmit={handleAnalyze} style={{ backgroundColor: 'rgba(30, 41, 59, 0.9)', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.3)' }}></form>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}></div>
-        <h2 style={{ fontSize: '2rem', color: 'var(--text-main)', marginBottom: '10px' }}>Interactive AI Review 📐</h2>
-        
-        <div style={{ display: 'flex', gap: '40px', alignItems: 'center', marginBottom: '30px', backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
-          <div style={{ flex: 1, position: 'relative', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'var(--bg-main)', display: 'flex', justifyContent: 'center' }}>
-            {frontPreview && <img src={frontPreview} style={{ width: '100%', maxHeight: '450px', objectFit: 'contain' }} alt="Preview" />}
-            {['shoulders', 'chest', 'waist', 'hips'].map((part, i) => (
-              <div key={part} style={{ position: 'absolute', top: `${22 + (i*12)}%`, width: '100%', textAlign: 'center', opacity: activeField === part ? 1 : 0, transition: '0.3s' }}>
-                <span style={{ backgroundColor: '#10b981', color: 'white', padding: '6px 16px', borderRadius: '20px', fontWeight: 'bold', textTransform: 'capitalize' }}>{part} ➔</span>
-              </div>
-            ))}
-          </div>
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+      {/* Hardcoded White Text */}
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '10px', color: '#f8fafc' }}>Setup My Profile 👤</h1>
+      <p style={{ color: '#cbd5e1', marginBottom: '30px', fontSize: '1.1rem' }}>
+        Upload your photos so our AI can measure your 3D proportions.
+      </p>
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            <div>
-              <label style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>Predicted Body Type</label>
-              <input type="text" value={measurements.bodyType} onChange={e => setMeasurements({...measurements, bodyType: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }} />
+      {/* Hardcoded Visible Card Background */}
+      <form onSubmit={handleAnalyze} style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(0,0,0,0.5)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+          {['front', 'back', 'left', 'right'].map((angle) => (
+            <div key={angle} style={{ border: '2px dashed #475569', padding: '20px', borderRadius: '8px', cursor: 'pointer', position: 'relative', textAlign: 'center', backgroundColor: '#0f172a' }}>
+              <input type="file" accept="image/*" onChange={(e) => handleFileChange(angle, e)} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: 'pointer', zIndex: 10 }} />
+              <p style={{ fontWeight: 'bold', color: files[angle] ? '#10b981' : '#cbd5e1', textTransform: 'capitalize', margin: 0 }}>
+                {files[angle] ? `✅ ${angle} Selected` : `📸 ${angle} ${angle === 'front' ? '(Required)' : ''}`}
+              </p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {['chest', 'waist', 'hips', 'shoulderWidth'].map((key) => (
-                <div key={key}>
-                  <label style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: 'bold', textTransform: 'capitalize' }}>{key.replace('Width', '')} (in)</label>
-                  <input type="number" value={measurements[key]} onFocus={() => setActiveField(key === 'shoulderWidth' ? 'shoulders' : key)} onBlur={() => setActiveField(null)} onChange={e => setMeasurements({...measurements, [key]: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: activeField === key ? '2px solid #10b981' : '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }} />
-                </div>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
-        <button onClick={handleFinalSave} disabled={loading} style={{ backgroundColor: '#10b981', color: 'white', padding: '15px 30px', borderRadius: '8px', border: 'none', cursor: 'pointer', width: '100%', fontSize: '1.1rem', fontWeight: 'bold' }}>
-          {loading ? 'Saving Updates...' : 'Looks Good! Save & Enter Closet ➔'}
+        
+        {/* Hardcoded Bright Blue Button */}
+        <button type="submit" disabled={loading || !files.front} style={{ backgroundColor: (!files.front || loading) ? '#334155' : '#3b82f6', color: '#ffffff', padding: '15px 24px', borderRadius: '8px', border: 'none', cursor: (!files.front || loading) ? 'not-allowed' : 'pointer', width: '100%', fontSize: '1.2rem', fontWeight: 'bold', transition: '0.2s' }}>
+          {loading ? 'Analyzing AI Data...' : 'Generate AI Profile ➔'}
         </button>
-      </div>
-    );
+      </form>
+    </div>
+  );
   }
 
   return (
