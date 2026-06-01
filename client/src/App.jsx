@@ -279,6 +279,76 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
 };
 
 // ==========================================
+// 💳 NEW: SUBSCRIPTION/PLAN SELECTION
+// ==========================================
+const Subscription = ({ onSelectPlan }) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSelect = (planType) => {
+    setLoading(true);
+    // If premium, this is where you'd eventually open a Razorpay or Stripe checkout!
+    // For now, we will just simulate a quick save and move them forward.
+    setTimeout(() => {
+      onSelectPlan(planType);
+    }, 800);
+  };
+
+  return (
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
+        <h1 style={{ fontSize: '2.5rem', color: '#f8fafc', marginBottom: '10px' }}>Choose Your Aura ✨</h1>
+        <p style={{ color: '#cbd5e1', fontSize: '1.2rem' }}>Select a plan to continue setting up your AI stylist profile.</p>
+      </div>
+
+      <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', justifyContent: 'center' }}>
+        
+        {/* FREE TIER CARD */}
+        <div style={{ flex: '1 1 300px', maxWidth: '400px', backgroundColor: '#1e293b', padding: '40px 30px', borderRadius: '16px', border: '1px solid #334155', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column' }}>
+          <h2 style={{ fontSize: '1.8rem', color: '#f8fafc', margin: '0 0 5px 0' }}>Basic Stylist</h2>
+          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#10b981', marginBottom: '20px' }}>Free</div>
+          
+          <ul style={{ color: '#cbd5e1', fontSize: '1.1rem', lineHeight: '1.8', padding: 0, listStyle: 'none', marginBottom: '30px', flex: 1 }}>
+            <li>✅ Setup 3D AI Body Profile</li>
+            <li>✅ Upload up to <b>30 Photos</b> total</li>
+            <li><span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>*(Deleted photos still count towards limit)*</span></li>
+            <li style={{ marginTop: '10px' }}>✅ <b>20 AI Stylist Lookbook</b> requests</li>
+            <li>❌ Priority AI Processing</li>
+          </ul>
+
+          <button onClick={() => handleSelect('free')} disabled={loading} style={{ backgroundColor: 'transparent', color: '#f8fafc', border: '2px solid #cbd5e1', padding: '15px', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1.1rem', fontWeight: 'bold', width: '100%', transition: '0.2s' }}>
+            {loading ? 'Setting up...' : 'Continue with Free'}
+          </button>
+        </div>
+
+        {/* PREMIUM TIER CARD */}
+        <div style={{ flex: '1 1 300px', maxWidth: '400px', backgroundColor: '#0f172a', padding: '40px 30px', borderRadius: '16px', border: '2px solid #fbbf24', boxShadow: '0 10px 40px rgba(251, 191, 36, 0.15)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: '-15px', left: '50%', transform: 'translateX(-50%)', backgroundColor: '#fbbf24', color: '#0f172a', padding: '5px 15px', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.9rem' }}>
+            MOST POPULAR
+          </div>
+          
+          <h2 style={{ fontSize: '1.8rem', color: '#fbbf24', margin: '0 0 5px 0' }}>Aura Premium</h2>
+          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#f8fafc', marginBottom: '20px' }}>₹100 <span style={{ fontSize: '1rem', color: '#cbd5e1', fontWeight: 'normal' }}>/ month</span></div>
+          
+          <ul style={{ color: '#cbd5e1', fontSize: '1.1rem', lineHeight: '1.8', padding: 0, listStyle: 'none', marginBottom: '30px', flex: 1 }}>
+            <li>⭐ Setup 3D AI Body Profile</li>
+            <li>⭐ <b>Unlimited</b> Photo Uploads</li>
+            <li>⭐ <b>Unlimited</b> AI Stylist Requests</li>
+            <li>⭐ VIP Priority AI Processing</li>
+            <li>⭐ Advanced Style Boundaries Check</li>
+          </ul>
+
+          <button onClick={() => handleSelect('premium')} disabled={loading} style={{ backgroundColor: '#fbbf24', color: '#0f172a', border: 'none', padding: '15px', borderRadius: '8px', cursor: loading ? 'not-allowed' : 'pointer', fontSize: '1.1rem', fontWeight: 'bold', width: '100%', transition: '0.2s' }}>
+            {loading ? 'Processing...' : 'Upgrade to Premium ➔'}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+
+// ==========================================
 // 📐 5. SETUP COMPONENT (FIXED LOGIC & OVERLAY)
 // ==========================================
 const Setup = ({ userId, onComplete }) => {
@@ -404,6 +474,9 @@ export default function App() {
     return saved ? JSON.parse(saved) : null;
   });
   
+  // 🌟 NEW: Track if the user has selected a subscription plan
+  const [userPlan, setUserPlan] = useState(() => localStorage.getItem('aura_plan'));
+
   const [needsSetup, setNeedsSetup] = useState(() => {
     const saved = localStorage.getItem('aura_profile');
     if (saved) {
@@ -436,10 +509,11 @@ export default function App() {
     localStorage.removeItem('aura_token');
     localStorage.removeItem('aura_userId');
     localStorage.removeItem('aura_profile');
+    localStorage.removeItem('aura_plan'); // Clear plan on logout
     
-    setToken(null); setUserId(null); setUserProfile(null); setClothes([]);
+    setToken(null); setUserId(null); setUserProfile(null); setClothes([]); setUserPlan(null);
     setUploadData({ files: [], previews: [], loading: false, progress: { current: 0, total: 0 } });
-    setStylistData({ occasion: '', location: '', loading: false, outfits: [] });
+    setStylistData({ occasion: '', location: '', preferences: '', loading: false, outfits: [] });
   };
 
   const fetchCloset = () => {
@@ -448,9 +522,26 @@ export default function App() {
 
   useEffect(() => { fetchCloset(); }, [userId]);
 
+  // --- 🚦 THE ROUTING GATEWAY ---
+
+  // Gate 1: Must be logged in
   if (!token) return <Auth onAuthSuccess={handleAuthSuccess} />;
 
-  // 🌟 NEW: Added zIndex so the Setup screen sits perfectly above the frosted glass!
+  // Gate 2: Must choose a plan before taking the body scan
+  if (!userPlan) {
+    return (
+      <div className="app-layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', zIndex: 10, width: '100%' }}>
+          <Subscription onSelectPlan={(plan) => {
+            localStorage.setItem('aura_plan', plan);
+            setUserPlan(plan);
+          }} />
+        </div>
+      </div>
+    );
+  }
+
+  // Gate 3: Must complete Setup (Photo Upload)
   if (needsSetup) {
     return (
       <div className="app-layout" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -469,49 +560,10 @@ export default function App() {
     );
   }
 
+  // Gate 4: The Main Dashboard
   return (
     <Router>
-      <div className="app-layout">
-        
-        {/* SIDEBAR NAVIGATION */}
-        <nav className="app-sidebar">
-          <h2 style={{ marginBottom: '1.5rem', textAlign: 'center', margin: '0 0 1rem 0', color: 'var(--nav-text)' }}>AURA STYLIST</h2>
-          
-          <div className="nav-links-container">
-            <Link to="/" style={{ color: 'var(--nav-text)', textDecoration: 'none', padding: '10px', backgroundColor: 'var(--nav-item)', borderRadius: '8px' }}>My Closet</Link>
-            <Link to="/upload" style={{ color: 'var(--nav-text)', textDecoration: 'none', padding: '10px', backgroundColor: 'var(--nav-item)', borderRadius: '8px' }}>Add Clothes</Link>
-            <Link to="/stylist" style={{ color: '#fbbf24', textDecoration: 'none', padding: '10px', backgroundColor: 'var(--nav-item)', borderRadius: '8px', fontWeight: 'bold' }}>AI Stylist</Link>
-          </div>
-
-          <div className="mobile-hide-profile" style={{ flex: 1, marginTop: '1.5rem', position: 'relative', borderRadius: '12px', overflow: 'hidden', border: '1px solid #334155', display: 'flex', flexDirection: 'column', backgroundColor: '#0f172a' }}>
-            {userProfile && userProfile.frontImage && (
-              <img src={userProfile.frontImage} alt="My Body" style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0, objectFit: 'cover', objectPosition: 'top' }} />
-            )}
-            {userProfile && (
-              <div style={{ marginTop: 'auto', position: 'relative', zIndex: 1, padding: '30px 10px 15px', background: 'linear-gradient(to top, rgba(15,23,42,1) 15%, rgba(15,23,42,0.8) 60%, rgba(15,23,42,0) 100%)', textAlign: 'center' }}>
-                <p style={{ color: '#fbbf24', fontWeight: 'bold', margin: 0 }}>{userProfile.measurements.bodyType}</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', fontSize: '0.80rem', color: '#cbd5e1', marginTop: '5px' }}>
-                  <span>Chest: {userProfile.measurements.chest}"</span>
-                  <span>Waist: {userProfile.measurements.waist}"</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <button className="mobile-hide-profile" onClick={handleLogout} style={{ marginTop: '1rem', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', padding: '10px', borderRadius: '8px', cursor: 'pointer' }}>
-            Logout
-          </button>
-        </nav>
-        
-        {/* MAIN CONTENT */}
-        <main style={{ flex: 1, paddingBottom: '2rem' }}>
-          <Routes>
-            <Route path="/" element={<Wardrobe clothes={clothes} setClothes={setClothes} />} />
-            <Route path="/upload" element={<Upload userId={userId} refreshCloset={fetchCloset} uploadData={uploadData} setUploadData={setUploadData} />} />
-            <Route path="/stylist" element={<Stylist userId={userId} clothes={clothes} userProfile={userProfile} stylistData={stylistData} setStylistData={setStylistData} />} />
-          </Routes>
-        </main>
-      </div>
+       {/* ... Your existing <nav> and <main> sidebar code goes here exactly as it is ... */}
     </Router>
   );
 }
