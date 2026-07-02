@@ -5,58 +5,96 @@ import axios from 'axios';
 import './App.css'; // WE NEED THIS BACK FOR THE MAIN APP!
 
 // ==========================================
-// 🔐 1. AUTHENTICATION
+// 🔐 1. AUTHENTICATION (WITH REAL OTP FLOW)
 // ==========================================
 const Auth = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
+  const [step, setStep] = useState(1); // Step 1: Forms, Step 2: OTP Input
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSubmit = async (e) => {
+  const handleInitialSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
-    
+    setSuccessMsg('');
+
+    if (isLogin) {
+      // Direct Login Flow
+      try {
+        const response = await axios.post('https://stylist-q497.onrender.com/api/auth/login', { email, password });
+        localStorage.setItem('aura_token', response.data.token);
+        onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
+      } catch (err) {
+        setError(`🚨 ${err.response?.data?.error || "Login failed"}`);
+      }
+      setLoading(false);
+    } else {
+      // Sign Up Flow - Request OTP First
+      try {
+        await axios.post('https://stylist-q497.onrender.com/api/auth/send-otp', { email });
+        setSuccessMsg('📧 Verification code sent to your email inbox!');
+        setStep(2); // Push them to the OTP input screen
+      } catch (err) {
+        setError(`🚨 ${err.response?.data?.error || "Failed to send code"}`);
+      }
+      setLoading(false);
+    }
+  };
+
+  const handleOtpVerify = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      const response = await axios.post(`https://stylist-q497.onrender.com${endpoint}`, { email, password });
+      const response = await axios.post('https://stylist-q497.onrender.com/api/auth/verify-otp', { email, password, otp });
       localStorage.setItem('aura_token', response.data.token);
-      onAuthSuccess(response.data.userId, response.data.measurements, response.data.frontImage);
+      // Auto-login immediately upon successful real verification
+      onAuthSuccess(response.data.userId, null, null); 
     } catch (err) {
-      console.error("FULL CRASH REPORT:", err);
-      const exactError = err.response?.data?.error || err.response?.data?.message || err.message || "Unknown server error";
-      setError(`🚨 ${exactError}`);
+      setError(`🚨 ${err.response?.data?.error || "Invalid verification code"}`);
     }
     setLoading(false);
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundImage: 'url("/login-bg.jpg")', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-      <div style={{ backgroundColor: 'rgba(15, 23, 42, 0.7)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', width: '100%', maxWidth: '400px', border: '1px solid rgba(251, 191, 36, 0.3)' }}>
-        <h1 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '10px', letterSpacing: '3px', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>AURA STYLIST</h1>
-        <p style={{ textAlign: 'center', color: '#e2e8f0', marginBottom: '30px' }}>{isLogin ? 'Welcome back.' : 'Create an account.'}</p>
+    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a' }}>
+      <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', width: '100%', maxWidth: '400px', border: '1px solid #334155' }}>
+        <h1 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '10px' }}>AURA STYLIST</h1>
         
-        {error && <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '10px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontWeight: 'bold', border: '1px solid #ef4444' }}>{error}</div>}
-        
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ position: 'relative' }}>
-            <Mail size={20} color="#fbbf24" style={{ position: 'absolute', top: '12px', left: '12px' }} />
-            <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.15)', color: 'white', outline: 'none', boxSizing: 'border-box', fontSize: '1rem' }} />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <Lock size={20} color="#fbbf24" style={{ position: 'absolute', top: '12px', left: '12px' }} />
-            <input type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.15)', color: 'white', outline: 'none', boxSizing: 'border-box', fontSize: '1rem' }} />
-          </div>
-          <button type="submit" disabled={loading} style={{ backgroundColor: '#fbbf24', color: '#0f172a', padding: '15px', borderRadius: '8px', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '1.1rem', transition: '0.2s', boxShadow: '0 4px 6px rgba(0,0,0,0.2)' }}>
-            {loading ? 'Processing...' : (isLogin ? 'Enter Wardrobe' : 'Sign Up')}
-          </button>
-        </form>
-        
-        <p style={{ textAlign: 'center', marginTop: '25px', color: '#cbd5e1', fontSize: '1.05rem' }}>
-          <span onClick={() => setIsLogin(!isLogin)} style={{ color: '#fbbf24', cursor: 'pointer', fontWeight: 'bold', padding: '10px' }}>{isLogin ? 'Create Account' : 'Log In Instead'}</span>
-        </p>
+        {error && <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '10px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
+        {successMsg && <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', padding: '10px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>{successMsg}</div>}
+
+        {step === 1 ? (
+          /* STEP 1: LOGIN OR SIGNUP CREATION */
+          <form onSubmit={handleInitialSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #475569', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' }} />
+            <input type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #475569', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' }} />
+            <button type="submit" disabled={loading} style={{ backgroundColor: '#fbbf24', color: '#0f172a', padding: '15px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+              {loading ? 'Sending Request...' : (isLogin ? 'Login' : 'Send Verification Code')}
+            </button>
+            <p onClick={() => setIsLogin(!isLogin)} style={{ color: '#fbbf24', textAlign: 'center', cursor: 'pointer', marginTop: '10px' }}>
+              {isLogin ? "Don't have an account? Sign Up" : 'Already have an account? Log In'}
+            </p>
+          </form>
+        ) : (
+          /* STEP 2: OTP INPUT MATRIX SCREEN */
+          <form onSubmit={handleOtpVerify} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <p style={{ color: '#cbd5e1', textAlign: 'center', fontSize: '0.95rem' }}>Enter the 6-digit verification code sent to <b>{email}</b></p>
+            <input type="text" maxLength="6" placeholder="Enter OTP" required value={otp} onChange={(e) => setOtp(e.target.value)} style={{ width: '100%', padding: '15px', borderRadius: '8px', border: '1px solid #fbbf24', backgroundColor: '#0f172a', color: 'white', textAlign: 'center', fontSize: '1.5rem', letterSpacing: '8px', boxSizing: 'border-box' }} />
+            <button type="submit" disabled={loading} style={{ backgroundColor: '#10b981', color: 'white', padding: '15px', borderRadius: '8px', border: 'none', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.1rem' }}>
+              {loading ? 'Verifying...' : 'Verify & Create Account ✅'}
+            </button>
+            <p onClick={() => { setStep(1); setSuccessMsg(''); }} style={{ color: '#94a3b8', textAlign: 'center', cursor: 'pointer', textDecoration: 'underline' }}>
+              Change Email Address
+            </p>
+          </form>
+        )}
       </div>
     </div>
   );

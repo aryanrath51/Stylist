@@ -11,6 +11,18 @@ import multer from 'multer';
 import User from './models/User.js';
 import WardrobeItem from './models/WardrobeItem.js'; 
 
+// Temporary storage for OTPs before account creation
+const otpStorage = new Map(); 
+
+// Configure email sender (Using Gmail - you can use your own credentials)
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER, // Your Gmail address in .env
+        pass: process.env.EMAIL_PASS  // Your Gmail App Password in .env
+    }
+});
+
 dotenv.config();
 
 const app = express();
@@ -35,6 +47,65 @@ app.get('/', (req, res) => res.send('Aura-Stylist Server is Running!'));
 // ==========================================
 // 🔐 AUTHENTICATION ROUTES
 // ==========================================
+
+// 1. ROUTE: Send OTP to Email
+app.post('/api/auth/send-otp', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const existingUser = await User.findOne({ email });
+        if (existingUser) return res.status(400).json({ error: "Email already in use!" });
+
+        // Generate a random 6-digit code
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+        // Store OTP in memory for 5 minutes
+        otpStorage.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+
+        // Send the email
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: '🔑 Your Aura Stylist Verification Code',
+            text: `Your verification code is: ${otp}. It will expire in 5 minutes.`
+        };
+
+        await transporter.sendMail(mailOptions);
+        res.status(200).json({ message: "OTP sent successfully!" });
+    } catch (error) {
+        console.error("OTP Error:", error);
+        res.status(500).json({ error: "Failed to send verification code." });
+    }
+});
+
+// 2. ROUTE: Verify OTP & Create Account
+app.post('/api/auth/verify-otp', async (req, res) => {
+    try {
+        const { email, password, otp } = req.body;
+
+        const record = otpStorage.get(email);
+        if (!record) return res.status(400).json({ error: "Please request an OTP first." });
+        if (record.expiresAt < Date.now()) {
+            otpStorage.delete(email);
+            return res.status(400).json({ error: "OTP has expired. Request a new one." });
+        }
+        if (record.otp !== otp) return res.status(400).json({ error: "Incorrect verification code!" });
+
+        // OTP is correct! Clear it from memory and create the user
+        otpStorage.delete(email);
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newUser = new User({ email, password: hashedPassword });
+        await newUser.save();
+
+        const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET || "super_secret_jwt_key", { expiresIn: '7d' });
+        res.status(201).json({ token, userId: newUser._id });
+    } catch (error) {
+        res.status(500).json({ error: "Verification failed." });
+    }
+});
+
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { email, password } = req.body;
