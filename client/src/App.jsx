@@ -99,13 +99,21 @@ const Wardrobe = ({ clothes, setClothes }) => {
 };
 
 // ==========================================
-// 📸 3. UPLOAD COMPONENT
+// 📸 3. UPLOAD COMPONENT (WITH AI GATEKEEPER)
 // ==========================================
 const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
   const { files, previews, loading, progress: uploadProgress } = uploadData;
 
+  const [totalUploaded, setTotalUploaded] = useState(() => {
+    return parseInt(localStorage.getItem(`aura_uploaded_${userId}`) || "0", 10);
+  });
+
   const handleImageChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
+    if (totalUploaded + selectedFiles.length > 30) {
+      alert(`🚨 Free Tier Limit Exceeded! You have already uploaded ${totalUploaded}/30 photos. You can only upload ${30 - totalUploaded} more.`);
+      return;
+    }
     if (selectedFiles.length > 60) return alert("Maximum 60 images at a time!");
     setUploadData(prev => ({ ...prev, files: selectedFiles, previews: selectedFiles.map(file => URL.createObjectURL(file)) }));
   };
@@ -115,6 +123,7 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
   const handleBulkUpload = async (e) => {
     e.preventDefault();
     if (files.length === 0) return alert("Please select images first!");
+    
     setUploadData(prev => ({ ...prev, loading: true }));
     let totalSaved = 0; let totalSkipped = 0;
 
@@ -125,20 +134,39 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
       formData.append('userId', userId);
       try {
         const response = await axios.post('https://stylist-q497.onrender.com/api/upload-clothing', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
-        totalSaved += response.data.savedCount; totalSkipped += response.data.skippedCount;
+        totalSaved += response.data.savedCount; 
+        totalSkipped += response.data.skippedCount;
+        
+        setTotalUploaded(prev => {
+          const nextCount = prev + 1;
+          localStorage.setItem(`aura_uploaded_${userId}`, nextCount);
+          return nextCount;
+        });
+
         if (i < files.length - 1) await sleep(4000); 
       } catch (error) { 
+        // 🛑 THE FRONTEND GATEKEEPER CATCHES THE BACKEND REJECTION
+        if (error.response?.status === 400 && error.response?.data?.isRestricted) {
+          alert(`⚠️ Photo ${i + 1} Blocked: Undergarments and innerwear cannot be added to your profile.`);
+          continue; // Skips to the next photo instantly
+        }
         if (error.response?.status === 429) await sleep(15000); 
       }
     }
-    alert(`✅ Analysis Complete!\nAdded: ${totalSaved}\nSkipped: ${totalSkipped} duplicates.`);
+    
+    alert(`✅ Analysis Complete!\nAdded: ${totalSaved}\nSkipped: ${totalSkipped} duplicates or blocked items.`);
     setUploadData({ files: [], previews: [], loading: false, progress: { current: 0, total: 0 } });
     refreshCloset();
   };
 
   return (
     <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>📸 Add to Wardrobe</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '2rem', color: 'var(--text-main)', margin: 0 }}>📸 Add to Wardrobe</h1>
+        <span style={{ backgroundColor: '#1e293b', color: '#cbd5e1', padding: '6px 14px', borderRadius: '20px', fontSize: '0.9rem', border: '1px solid var(--border-color)' }}>
+          Usage: <b>{totalUploaded}/30</b> Photos
+        </span>
+      </div>
       <form onSubmit={handleBulkUpload} style={{ backgroundColor: 'var(--bg-card)', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', textAlign: 'center', transition: '0.3s' }}>
         <div style={{ border: '2px dashed var(--border-color)', padding: '40px 20px', borderRadius: '8px', marginBottom: '20px', cursor: 'pointer', position: 'relative', minHeight: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
           <input type="file" accept="image/*" multiple onChange={handleImageChange} disabled={loading} style={{ opacity: 0, position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', cursor: loading ? 'not-allowed' : 'pointer', zIndex: 10 }} />
@@ -174,20 +202,43 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
 };
 
 // ==========================================
-// ✨ 4. STYLIST COMPONENT (EMPATHY UPGRADE)
+// ✨ 4. STYLIST COMPONENT (WEATHER & BOUNDARIES)
 // ==========================================
 const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) => {
-  const { occasion, location, preferences, loading, outfits } = stylistData;
+  // 🌟 Notice we extract preferences and weatherFetched from state now
+  const { occasion, location, preferences, weatherFetched, loading, outfits } = stylistData;
+
+  const [aiAsks, setAiAsks] = useState(() => {
+    return parseInt(localStorage.getItem(`aura_asks_${userId}`) || "0", 10);
+  });
 
   const generateOutfit = async (e) => {
     e.preventDefault();
-    setStylistData(prev => ({ ...prev, loading: true, outfits: [] }));
+    if (aiAsks >= 20) {
+      alert("🚨 Free Tier Limit Reached! You have used all 20 of your free AI lookbook generations.");
+      return;
+    }
+
+    setStylistData(prev => ({ ...prev, loading: true, outfits: [], weatherFetched: null }));
     try {
-      // 🌟 Notice we are now sending 'preferences' to your backend!
+      // 🌟 Passing preferences to the backend
       const response = await axios.post('https://stylist-q497.onrender.com/api/generate-outfit', { 
         userId, occasion, location, preferences 
       });
-      setStylistData(prev => ({ ...prev, loading: false, outfits: response.data.suggestions }));
+      
+      setAiAsks(prev => {
+        const nextAsks = prev + 1;
+        localStorage.setItem(`aura_asks_${userId}`, nextAsks);
+        return nextAsks;
+      });
+
+      // 🌟 Catching both the outfits AND the weather text from the backend
+      setStylistData(prev => ({ 
+        ...prev, 
+        loading: false, 
+        outfits: response.data.suggestions,
+        weatherFetched: response.data.weatherFetched
+      }));
     } catch (error) {
       alert("Failed to consult AI. Make sure you have enough clothes!");
       setStylistData(prev => ({ ...prev, loading: false }));
@@ -196,9 +247,14 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
 
   return (
     <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Sparkles color="#fbbf24" size={36} /> AI Stylist
-      </h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <h1 style={{ fontSize: '2.5rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+          <Sparkles color="#fbbf24" size={36} /> AI Stylist
+        </h1>
+        <span style={{ backgroundColor: '#1e293b', color: '#cbd5e1', padding: '6px 14px', borderRadius: '20px', fontSize: '0.9rem', border: '1px solid var(--border-color)' }}>
+          AI Requests: <b>{aiAsks}/20</b>
+        </span>
+      </div>
       
       <form onSubmit={generateOutfit} style={{ backgroundColor: 'var(--bg-card)', padding: '25px', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', marginBottom: '2.5rem', transition: '0.3s' }}>
         
@@ -209,17 +265,17 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
           </div>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '8px' }}>Where are you going?</label>
-            <input type="text" required value={location} onChange={(e) => setStylistData(p => ({...p, location: e.target.value}))} placeholder="e.g., Temple in Delhi" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(15, 23, 42, 0.5)', color: 'white', boxSizing: 'border-box', outline: 'none' }} />
+            <input type="text" required value={location} onChange={(e) => setStylistData(p => ({...p, location: e.target.value}))} placeholder="e.g., Delhi" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(15, 23, 42, 0.5)', color: 'white', boxSizing: 'border-box', outline: 'none' }} />
           </div>
         </div>
 
-        {/* 🌟 THE NEW CHAT/PREFERENCES BOX */}
+        {/* 🌟 THE CHAT/PREFERENCES BOX */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '8px' }}>Any boundaries or style requests? (Optional)</label>
           <textarea 
-            value={preferences} 
+            value={preferences || ''} 
             onChange={(e) => setStylistData(p => ({...p, preferences: e.target.value}))} 
-            placeholder="e.g., I don't want to wear sleeveless, keep it modest, no bright colors or shirt dresses, etc." 
+            placeholder="e.g., I don't want to wear sleeveless, keep it modest, no bright colors..." 
             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'rgba(15, 23, 42, 0.5)', color: 'white', boxSizing: 'border-box', outline: 'none', minHeight: '80px', resize: 'vertical', fontFamily: 'inherit' }} 
           />
         </div>
@@ -231,8 +287,15 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
       
       {outfits.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '2px solid var(--border-color)', paddingBottom: '10px' }}>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', borderBottom: '2px solid var(--border-color)', paddingBottom: '15px' }}>
             <h2 style={{ fontSize: '1.8rem', color: 'var(--text-main)', margin: 0 }}>Your AI Lookbook:</h2>
+            {/* 🌤️ DISPLAY LIVE WEATHER IF AVAILABLE */}
+            {weatherFetched && weatherFetched !== "Unknown" && (
+              <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', display: 'inline-block', alignSelf: 'flex-start' }}>
+                🌤️ <b>Live Weather Detected:</b> {weatherFetched}
+              </div>
+            )}
           </div>
           
           {outfits.filter(o => clothes.some(c => c._id === o.topId) && clothes.some(c => c._id === o.bottomId)).map((outfit, index) => {
@@ -277,7 +340,6 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
     </div>
   );
 };
-
 
 // ==========================================
 // 📐 5. SETUP COMPONENT (FIXED LOGIC & OVERLAY)
@@ -416,7 +478,14 @@ export default function App() {
 
   const [clothes, setClothes] = useState([]);
   const [uploadData, setUploadData] = useState({ files: [], previews: [], loading: false, progress: { current: 0, total: 0 } });
-  const [stylistData, setStylistData] = useState({ occasion: '', location: '', preferences: '', loading: false, outfits: [] });
+  const [stylistData, setStylistData] = useState({ 
+    occasion: '', 
+    location: '', 
+    preferences: '', 
+    weatherFetched: null, 
+    loading: false, 
+    outfits: [] 
+  });
 
   const handleAuthSuccess = (id, measurements, permanentImage) => {
     setUserId(id);

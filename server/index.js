@@ -181,14 +181,16 @@ app.post('/api/upload-clothing', upload.single('image'), async (req, res) => {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = [
-            "Analyze the clothing in this image. You must evaluate the upper body and lower body separately.",
-            "Return ONLY a valid JSON object exactly matching this structure. Do not add markdown or text.",
-            "{",
-            '  "top": { "found": true, "category": "Top", "subCategory": "Mock Neck Sweater", "color": "Cream", "pattern": "Ribbed", "occasion": ["Casual"] },',
-            '  "bottom": { "found": true, "category": "Bottom", "subCategory": "Jeans", "color": "Blue", "pattern": "Solid", "occasion": ["Casual"] }',
-            "}",
-            "CRITICAL: If there is no top visible, set top.found to false. If there is no bottom visible, set bottom.found to false."
-        ].join('\n');
+  "Analyze the clothing in this image. You must evaluate the upper body and lower body separately.",
+  "Return ONLY a valid JSON object exactly matching this structure. Do not add markdown or text.",
+  "{",
+  "  \"isRestricted\": false, // Set this to true ONLY if the image contains an undergarment, underwear, lingerie, boxer shorts, brassiere, or innerwear.",
+  "  \"top\": { \"found\": true, \"category\": \"Top\", \"subCategory\": \"Mock Neck Sweater\", \"color\": \"Cream\", \"pattern\": \"Ribbed\", \"occasion\": [\"Casual\"] },",
+  "  \"bottom\": { \"found\": true, \"category\": \"Bottom\", \"subCategory\": \"Jeans\", \"color\": \"Blue\", \"pattern\": \"Solid\", \"occasion\": [\"Casual\"] }",
+  "}",
+  "CRITICAL: If the image is explicitly an undergarment/innerwear, you MUST set \"isRestricted\": true. Otherwise, always leave it false.",
+  "CRITICAL: If there is no top visible, set top.found to false. If there is no bottom visible, set bottom.found to false."
+].join('\n');
 
         const aiResult = await model.generateContent([prompt, { inlineData: { data: base64Image, mimeType: req.file.mimetype } }]);
         const rawText = aiResult.response.text();
@@ -199,6 +201,14 @@ app.post('/api/upload-clothing', upload.single('image'), async (req, res) => {
         
         const jsonString = rawText.substring(startIndex, endIndex + 1);
         const aiResponse = JSON.parse(jsonString);
+
+        // 🛑 THE RESTRICTION GATEKEEPER
+        if (aiResponse.isRestricted === true) {
+            return res.status(400).json({ 
+                error: "Wardrobe Restriction: Undergarments and innerwear cannot be added to your profile.",
+                isRestricted: true
+            });
+        }
 
         const aiItemsArray = [];
         if (aiResponse.top && aiResponse.top.found === true) aiItemsArray.push(aiResponse.top);
@@ -245,11 +255,12 @@ app.post('/api/upload-clothing', upload.single('image'), async (req, res) => {
 });
 
 // ==========================================
-// 🧠 AI STYLIST ROUTE (LIVE WEATHER AWARE!)
+// 🧠 AI STYLIST ROUTE (WEATHER & EMPATHY AWARE!)
 // ==========================================
 app.post('/api/generate-outfit', async (req, res) => {
     try {
-        const { userId, occasion, location } = req.body;
+        // 🌟 EXTRACT PREFERENCES HERE
+        const { userId, occasion, location, preferences } = req.body;
         const userProfile = await User.findById(userId);
         const userWardrobe = await WardrobeItem.find({ userId: userId });
 
@@ -263,7 +274,6 @@ app.post('/api/generate-outfit', async (req, res) => {
         
         if (location) {
             try {
-                // wttr.in is a free, no-key API. %C = Condition (e.g., Clear), %t = Temp
                 const weatherRes = await fetch(`https://wttr.in/${encodeURIComponent(location)}?format=%C+%t`);
                 if (weatherRes.ok) {
                     const weatherText = await weatherRes.text();
@@ -277,14 +287,17 @@ app.post('/api/generate-outfit', async (req, res) => {
 
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
-        // 🌤️ 2. INJECT WEATHER INTO THE AI PROMPT
+        // 🌤️ 2. INJECT WEATHER AND BOUNDARIES INTO THE AI PROMPT
         const prompt = [
             "You are an elite celebrity fashion stylist.",
             "Body Type: " + (userProfile?.measurements?.bodyType || "Unknown"),
             "Measurements: Chest " + (userProfile?.measurements?.chest || "Unknown") + '", Waist ' + (userProfile?.measurements?.waist || "Unknown") + '"',
             "Occasion: " + occasion + " in " + (location || 'Not specified'),
             "LIVE WEATHER FORECAST: " + weatherContext,
+            // 🌟 INJECT USER BOUNDARIES HERE
+            "USER STYLE BOUNDARIES & PREFERENCES: " + (preferences || "None specified. Feel free to use any appropriate items."),
             "CRITICAL INSTRUCTION: You MUST factor the live weather into your clothing choices. If it is hot, choose breathable items. If it is cold, prioritize sweaters and jackets. Mention the weather in your explanation.",
+            "CRITICAL INSTRUCTION: You MUST strictly respect the USER STYLE BOUNDARIES. Do not suggest anything they are uncomfortable wearing.",
             "AVAILABLE WARDROBE (JSON):",
             JSON.stringify(userWardrobe),
             "Select a MINIMUM of 4 and a MAXIMUM of 10 different outfit combinations from the wardrobe.",
@@ -293,7 +306,7 @@ app.post('/api/generate-outfit', async (req, res) => {
             "  {",
             '    "topId": "chosen _id",',
             '    "bottomId": "chosen _id",',
-            '    "explanation": "Why this flatters their body AND makes sense for the weather.",',
+            '    "explanation": "Why this flatters their body, respects their boundaries, AND makes sense for the weather.",',
             '    "aiRating": 9.5',
             "  }",
             "]"
@@ -309,7 +322,6 @@ app.post('/api/generate-outfit', async (req, res) => {
         
         const jsonString = rawText.substring(startIndex, endIndex + 1);
         
-        // Return both the AI suggestions AND the fetched weather string to the frontend
         res.status(200).json({ 
             suggestions: JSON.parse(jsonString),
             weatherFetched: liveWeatherDisplay 
