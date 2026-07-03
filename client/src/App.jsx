@@ -123,7 +123,15 @@ const Wardrobe = ({ clothes, setClothes }) => {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div style={{ 
+  padding: '2rem',
+  backgroundImage: 'url("/login-bg.jpg")', // Ensure this filename matches your image
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundAttachment: 'fixed',
+  minHeight: '100vh' // This ensures the background stretches to the bottom of the screen
+}}>
       <h1 style={{ fontSize: '2rem', marginBottom: '1.5rem', color: 'var(--text-main)' }}>👕 My Digital Closet</h1>
       {clothes.length === 0 ? (
         <div style={{ textAlign: 'center', marginTop: '10vh', backgroundColor: 'var(--bg-card)', padding: '40px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', transition: '0.3s' }}>
