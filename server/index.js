@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
+import nodemailer from 'nodemailer'; // 👈 ADD THIS LINE
 
 import User from './models/User.js';
 import WardrobeItem from './models/WardrobeItem.js'; 

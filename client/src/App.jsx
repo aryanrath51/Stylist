@@ -63,7 +63,17 @@ const Auth = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center', backgroundColor: '#0f172a' }}>
+    <div style={{ 
+      display: 'flex', 
+      height: '100vh', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      backgroundImage: 'url("/login-bg.jpg")', // 👈 Make sure this line exists!
+      backgroundSize: 'cover', 
+      backgroundPosition: 'center', 
+      backgroundRepeat: 'no-repeat' 
+    }}>
+
       <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', width: '100%', maxWidth: '400px', border: '1px solid #334155' }}>
         <h1 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '10px' }}>AURA STYLIST</h1>
         
