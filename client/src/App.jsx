@@ -216,7 +216,7 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto', backgroundImage: 'url("/login-bg.jpg")', 
+    <div style={{ padding: '2rem', backgroundImage: 'url("/login-bg.jpg")', 
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
