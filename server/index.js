@@ -64,7 +64,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
         // Send the email
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'aurastylist.10@gmail.com',
             to: email,
             subject: '🔑 Your Aura Stylist Verification Code',
             text: `Your verification code is: ${otp}. It will expire in 5 minutes.`
