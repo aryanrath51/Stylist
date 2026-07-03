@@ -216,7 +216,12 @@ const Upload = ({ userId, refreshCloset, uploadData, setUploadData }) => {
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem', maxWidth: '700px', margin: '0 auto', backgroundImage: 'url("/login-bg.jpg")', 
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundAttachment: 'fixed',
+  minHeight: '100vh' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '2rem', color: 'var(--text-main)', margin: 0 }}>📸 Add to Wardrobe</h1>
         <span style={{ backgroundColor: '#1e293b', color: '#cbd5e1', padding: '6px 14px', borderRadius: '20px', fontSize: '0.9rem', border: '1px solid var(--border-color)' }}>
@@ -302,7 +307,12 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', backgroundImage: 'url("/login-bg.jpg")', 
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundAttachment: 'fixed',
+  minHeight: '100vh' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h1 style={{ fontSize: '2.5rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
           <Sparkles color="#fbbf24" size={36} /> AI Stylist
