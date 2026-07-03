@@ -17,10 +17,10 @@ const otpStorage = new Map();
 
 const transporter = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
-    port: 587,
+    port: 2525, // 👈 The magic fix (changed from 587)
     auth: {
-        user: 'b0c251001@smtp-brevo.com', // Use the "Login" value from your screenshot
-        pass: process.env.EMAIL_PASS   // Use the Key you just generated
+        user: 'b0c251001@smtp-brevo.com', 
+        pass: process.env.EMAIL_PASS      
     }
 });
 
