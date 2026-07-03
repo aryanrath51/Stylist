@@ -307,7 +307,7 @@ const Stylist = ({ userId, clothes, userProfile, stylistData, setStylistData }) 
   };
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '900px', margin: '0 auto', backgroundImage: 'url("/login-bg.jpg")', 
+    <div style={{ padding: '2rem', backgroundImage: 'url("/login-bg.jpg")', 
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
