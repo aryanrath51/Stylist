@@ -15,12 +15,12 @@ import WardrobeItem from './models/WardrobeItem.js';
 // Temporary storage for OTPs before account creation
 const otpStorage = new Map(); 
 
-// Configure email sender (Using Gmail - you can use your own credentials)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp-relay.brevo.com',
+    port: 587,
     auth: {
-        user: process.env.EMAIL_USER, // Your Gmail address in .env
-        pass: process.env.EMAIL_PASS  // Your Gmail App Password in .env
+        user: 'b0c251001@smtp-brevo.com', // Use the "Login" value from your screenshot
+        pass: process.env.EMAIL_PASS   // Use the Key you just generated
     }
 });
 
