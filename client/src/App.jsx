@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Sparkles, Trash2, Mail, Lock } from 'lucide-react';
 import axios from 'axios';
-import './App.css'; // WE NEED THIS BACK FOR THE MAIN APP!
+import './App.css'; 
+import Spline from '@splinetool/react-spline';
 
 // ==========================================
-// 🔐 1. AUTHENTICATION (WITH REAL OTP FLOW)
+// 🔐 1. AUTHENTICATION (SPLINE 3D + REAL OTP FLOW)
 // ==========================================
 const Auth = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [step, setStep] = useState(1); // Step 1: Forms, Step 2: OTP Input
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -19,12 +20,9 @@ const Auth = ({ onAuthSuccess }) => {
 
   const handleInitialSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccessMsg('');
+    setLoading(true); setError(''); setSuccessMsg('');
 
     if (isLogin) {
-      // Direct Login Flow
       try {
         const response = await axios.post('https://stylist-q497.onrender.com/api/auth/login', { email, password });
         localStorage.setItem('aura_token', response.data.token);
@@ -34,11 +32,10 @@ const Auth = ({ onAuthSuccess }) => {
       }
       setLoading(false);
     } else {
-      // Sign Up Flow - Request OTP First
       try {
         await axios.post('https://stylist-q497.onrender.com/api/auth/send-otp', { email });
         setSuccessMsg('📧 Verification code sent to your email inbox!');
-        setStep(2); // Push them to the OTP input screen
+        setStep(2);
       } catch (err) {
         setError(`🚨 ${err.response?.data?.error || "Failed to send code"}`);
       }
@@ -48,13 +45,11 @@ const Auth = ({ onAuthSuccess }) => {
 
   const handleOtpVerify = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
 
     try {
       const response = await axios.post('https://stylist-q497.onrender.com/api/auth/verify-otp', { email, password, otp });
       localStorage.setItem('aura_token', response.data.token);
-      // Auto-login immediately upon successful real verification
       onAuthSuccess(response.data.userId, null, null); 
     } catch (err) {
       setError(`🚨 ${err.response?.data?.error || "Invalid verification code"}`);
@@ -63,25 +58,34 @@ const Auth = ({ onAuthSuccess }) => {
   };
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      height: '100vh', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      backgroundImage: 'url("/login-bg.jpg")', // 👈 Make sure this line exists!
-      backgroundSize: 'cover', 
-      backgroundPosition: 'center', 
-      backgroundRepeat: 'no-repeat' 
-    }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+      
+      {/* 1. Your 3D Character Scene */}
+      <Spline scene="https://prod.spline.design/UiuLHFQ27RWQC4wC/scene.splinecode" />
 
-      <div style={{ backgroundColor: 'rgba(30, 41, 59, 0.7)', backdropFilter: 'blur(10px)', padding: '40px', borderRadius: '16px', boxShadow: '0 10px 40px rgba(0,0,0,0.5)', width: '100%', maxWidth: '400px', border: '1px solid #334155' }}>
-        <h1 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '10px' }}>AURA STYLIST</h1>
+      {/* 2. Your Overlayed Functional Auth Form */}
+      <div style={{
+        position: 'absolute',
+        top: '50%',
+        right: '10%',
+        transform: 'translateY(-50%)',
+        zIndex: 10,
+        backgroundColor: 'rgba(15, 23, 42, 0.85)',
+        padding: '40px',
+        borderRadius: '16px',
+        color: '#fff',
+        backdropFilter: 'blur(10px)',
+        width: '100%',
+        maxWidth: '400px',
+        border: '1px solid #334155',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+      }}>
+        <h1 style={{ textAlign: 'center', color: '#fbbf24', marginBottom: '20px' }}>AURA STYLIST</h1>
         
         {error && <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#fca5a5', padding: '10px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
         {successMsg && <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: '#6ee7b7', padding: '10px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center' }}>{successMsg}</div>}
 
         {step === 1 ? (
-          /* STEP 1: LOGIN OR SIGNUP CREATION */
           <form onSubmit={handleInitialSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <input type="email" placeholder="Email Address" required value={email} onChange={(e) => setEmail(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #475569', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' }} />
             <input type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #475569', backgroundColor: '#0f172a', color: 'white', boxSizing: 'border-box' }} />
@@ -93,7 +97,6 @@ const Auth = ({ onAuthSuccess }) => {
             </p>
           </form>
         ) : (
-          /* STEP 2: OTP INPUT MATRIX SCREEN */
           <form onSubmit={handleOtpVerify} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <p style={{ color: '#cbd5e1', textAlign: 'center', fontSize: '0.95rem' }}>Enter the 6-digit verification code sent to <b>{email}</b></p>
             <input type="text" maxLength="6" placeholder="Enter OTP" required value={otp} onChange={(e) => setOtp(e.target.value)} style={{ width: '100%', padding: '15px', borderRadius: '8px', border: '1px solid #fbbf24', backgroundColor: '#0f172a', color: 'white', textAlign: 'center', fontSize: '1.5rem', letterSpacing: '8px', boxSizing: 'border-box' }} />
